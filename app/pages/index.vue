@@ -746,10 +746,10 @@
     }
     @media (max-width: 480px) {
         .wrapper {
-            height: 40vh;
+            height: 60vh;
         }
         .wrapper__overlay {
-            height: 40vh;
+            height: 60vh;
         }
         .hero {
             margin-top: 20px;
