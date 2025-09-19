@@ -1,11 +1,25 @@
 <script setup lang = 'ts'>
     import { onMounted } from 'vue'
     import { createTimeline, stagger, text } from 'animejs'
+    import { useSupabaseUser } from '#imports'
+    import { useRouter } from 'vue-router'
     import Button from '~/components/ui/button/Button.vue';
 
+    const user = useSupabaseUser()
+    const router = useRouter()
+
     definePageMeta({
-        layout: 'main'
+        layout: 'main',
+        middleware: 'auth'
     })
+
+    const handleStartClick = () => {
+        if (user.value) {
+            router.push('/main')
+        } else {
+            router.push('/registration')
+        }
+    }
 
     onMounted(() => {
         const animateText = (selector: string) => {
@@ -42,12 +56,12 @@
             <div class="container-custom">
                 <header class="header">
                     <nav class="nav">
-                        <a href="/" class="logo title">
+                        <NuxtLink href="/" class="logo title">
                             <img src="/logo.svg" alt=""> 
                             <span>Traveling</span>
-                        </a>
-                        <Button variant="default" class="cta">
-                            <a href="#">Начать</a>
+                        </NuxtLink>
+                        <Button variant="default" class="cta" @click="handleStartClick">
+                            Начать
                         </Button>
                     </nav>
                 </header>
@@ -65,9 +79,11 @@
             <p class="about-us__desc">
                 Мы стремимся помочь вам ощутить настоящий дух и характер каждой страны. Обладая глубокими местными знаниями и страстью к приключениям, мы создаем незабываемые путешествия — от безмятежных пляжей и оживленных городских рынков до древних исторических мест и скрытых троп в джунглях. Вы путешествуете впервые или являетесь опытным исследователем, наша миссия — сделать ваше путешествие подлинным,и по-настоящему запоминающимся.
             </p>
-            <Button class="about-us__cta">
-                <span>Начать</span>
-            </Button>
+            <NuxtLink to="./registration">                            
+                <Button variant="default" class="about-us__cta">
+                    Начать
+                </Button>
+            </NuxtLink>
         </section>
         <section class="destinations container-custom">
             <div class="badge">Наши направления</div>
@@ -88,9 +104,11 @@
                             Откройте для себя древние храмы, оживленные ночные рынки и пышные горные пейзажи. Чиангмай, расположенный у подножия гор северного Таиланда, предлагает идеальное сочетание традиций и спокойствия.
                         </p>
                         <div class="travel-card__footer">
-                            <Button class="cta">
-                            <span>Начать</span>
+                        <NuxtLink to="./registration">                            
+                            <Button variant="default" class="cta">
+                                Начать
                             </Button>
+                        </NuxtLink>
                         </div>
                     </div>
                 </article>
@@ -103,9 +121,11 @@
                         <p class="travel-card__desc">
                             Откройте для себя ультрасовременный мегаполис, где небоскрёбы соседствуют с зелёными садами и культурными кварталами. Сингапур удивляет своим разнообразием — от знаменитых садов у залива и панорамного колеса до уютных уличных рынков и кулинарных шедевров.</p>
                         <div class="travel-card__footer">
-                            <Button href="#" class="cta">
-                            <span>Начать</span>
-                        </Button>
+                            <NuxtLink to="./registration">                            
+                            <Button variant="default" class="cta">
+                                Начать
+                            </Button>
+                        </NuxtLink>
                         </div>
                     </div>
                 </article>
@@ -134,9 +154,11 @@
                             Откройте для себя древние храмы, оживленные ночные рынки и пышные горные пейзажи. Чиангмай, расположенный у подножия гор северного Таиланда, предлагает идеальное сочетание традиций и спокойствия.
                         </p>
                         <div class="travel-card__footer">
-                            <Button href="#" class="cta">
-                            <span>Начать</span>
-                        </Button>
+                            <NuxtLink to="./registration">                            
+                            <Button variant="default" class="cta">
+                                Начать
+                            </Button>
+                        </NuxtLink>
                         </div>
                     </div>
                 </article>
@@ -149,9 +171,11 @@
                         <p class="travel-card__desc">
                             Откройте для себя ультрасовременный мегаполис, где небоскрёбы соседствуют с зелёными садами и культурными кварталами. Сингапур удивляет своим разнообразием — от знаменитых садов у залива и панорамного колеса до уютных уличных рынков и кулинарных шедевров.</p>
                         <div class="travel-card__footer">
-                            <Button href="#" class="cta">
-                            <span>Начать</span>
-                        </Button>
+                            <NuxtLink to="./registration">                            
+                            <Button variant="default" class="cta">
+                                Начать
+                            </Button>
+                        </NuxtLink>
                         </div>
                     </div>
                 </article>
@@ -164,9 +188,11 @@
                         <p class="travel-card__desc">
                             Погрузитесь в атмосферу Страны Улыбок, где золотые храмы, райские пляжи и яркие рынки создают незабываемый колорит. Таиланд — это гармония природы и культуры: от шумного Бангкока до спокойных островов Андаманского моря.</p>
                         <div class="travel-card__footer">
-                            <Button href="#" class="cta">
-                            <span>Начать</span>
-                        </Button>
+                            <NuxtLink to="./registration">                            
+                            <Button variant="default" class="cta">
+                                Начать
+                            </Button>
+                        </NuxtLink>
                         </div>
                     </div>
                 </article>
@@ -180,9 +206,11 @@
                             Откройте для себя древние храмы, оживленные ночные рынки и пышные горные пейзажи. Чиангмай, расположенный у подножия гор северного Таиланда, предлагает идеальное сочетание традиций и спокойствия.
                         </p>
                         <div class="travel-card__footer">
-                            <Button href="#" class="cta">
-                            <span>Начать</span>
-                        </Button>
+                            <NuxtLink to="./registration">                            
+                            <Button variant="default" class="cta">
+                                Начать
+                            </Button>
+                        </NuxtLink>
                         </div>
                     </div>
                 </article>
@@ -195,9 +223,11 @@
                         <p class="travel-card__desc">
                             Откройте для себя ультрасовременный мегаполис, где небоскрёбы соседствуют с зелёными садами и культурными кварталами. Сингапур удивляет своим разнообразием — от знаменитых садов у залива и панорамного колеса до уютных уличных рынков и кулинарных шедевров.</p>
                         <div class="travel-card__footer">
-                            <Button href="#" class="cta">
-                            <span>Начать</span>
-                        </Button>
+                            <NuxtLink to="./registration">                            
+                            <Button variant="default" class="cta">
+                                Начать
+                            </Button>
+                        </NuxtLink>
                         </div>
                     </div>
                 </article>
@@ -210,9 +240,11 @@
                         <p class="travel-card__desc">
                             Погрузитесь в атмосферу Страны Улыбок, где золотые храмы, райские пляжи и яркие рынки создают незабываемый колорит. Таиланд — это гармония природы и культуры: от шумного Бангкока до спокойных островов Андаманского моря.</p>
                         <div class="travel-card__footer">
-                            <Button href="#" class="cta">
-                            <span>Начать</span>
-                        </Button>
+                            <NuxtLink to="./registration">                            
+                            <Button variant="default" class="cta">
+                                Начать
+                            </Button>
+                        </NuxtLink>
                         </div>
                     </div>
                 </article>
@@ -298,9 +330,11 @@
                     Предавайся своему любимому занятию — путешествиям. <br>
                     <span>Мы возьмем все хлопоты на себя.</span>
                 </h2>
-                <Button class="btn">
-                    <a href="#">Начать</a>
-                </Button>
+                <NuxtLink to="./registration">                            
+                            <Button variant="default" class="cta">
+                                Начать
+                            </Button>
+                        </NuxtLink>
             </div>
             <div class="footer__container-right">
                 <a href="/" class="logo title">
@@ -330,9 +364,7 @@
     width: 100%;
     background-color: #00000060;
 }
-.header {
-    padding-top: 40px;
-}
+
 .nav {
     display: flex;
     align-items: center;
@@ -715,6 +747,9 @@
         }
     }
     @media (max-width: 1200px) {
+        .header {
+            padding-top: 40px;
+        }
         .hero {
             width: 100%;
         }
@@ -746,10 +781,10 @@
     }
     @media (max-width: 480px) {
         .wrapper {
-            height: 40vh;
+            height: 60vh;
         }
         .wrapper__overlay {
-            height: 40vh;
+            height: 60vh;
         }
         .hero {
             margin-top: 20px;
