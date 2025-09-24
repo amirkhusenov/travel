@@ -12,7 +12,6 @@ const showPassword = ref(false)
 const showConfirmPassword = ref(false)
 const isLoading = ref(false)
 const errorMessage = ref('')
-
 const supabase = useSupabaseClient()
 const router = useRouter()
 
