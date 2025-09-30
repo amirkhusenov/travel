@@ -18,7 +18,7 @@ defineProps<Props>()
   <div class="tour-card">
     <div class="card-header">
       <span class="date">22<span>.04</span></span>
-      <NuxtLink to="./booking">
+      <NuxtLink :to="`./tour-info?country=${encodeURIComponent(tour.country)}&city=${encodeURIComponent(tour.city)}&price=${tour.price}&image=${encodeURIComponent(tour.image)}&id=${tour.id}`">
           <button class="arrow-btn">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M6 12L10 8L6 4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>

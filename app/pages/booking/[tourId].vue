@@ -14,6 +14,7 @@ interface BookingForm {
   phone: string
   tour_date: string
   notes: string
+  country: string
 }
 
 interface BookingData {
@@ -25,7 +26,20 @@ interface BookingData {
   notes: string | null
   status: boolean
   rejected?: boolean
+  country: string
 }
+
+interface Tour {
+  id: number
+  city: string
+  price: number
+  country: string
+  image: string
+}
+
+const route = useRoute()
+const tourId = route.params.tourId as string
+const tour = ref<Tour | null>(null)
 
 const selectedSeat = ref<number | null>(null)
 const showBookingForm = ref(false)
@@ -38,8 +52,11 @@ const form = ref<BookingForm>({
   email: '',
   phone: '',
   tour_date: '',
-  notes: ''
+  notes: '',
+  country: ''
 })
+
+const getStorageKey = (key: string) => `tour_${tourId}_${key}`
 
 const seats = ref<Seat[]>([
   { id: 1, isOccupied: false, isSelected: false },
@@ -118,7 +135,7 @@ const continueBooking = () => {
 }
 
 const submitBooking = async () => {
-  if (!form.value.name || !form.value.email || !form.value.phone || !form.value.tour_date) {
+  if (!form.value.name || !form.value.email || !form.value.phone || !form.value.tour_date || !form.value.country) {
     alert('Пожалуйста, заполните все обязательные поля')
     return
   }
@@ -136,7 +153,8 @@ const submitBooking = async () => {
       tour_date: form.value.tour_date,
       notes: form.value.notes || null,
       status: false,
-      rejected: false
+      rejected: false,
+      country: form.value.country
     }
     
     console.log('Отправляемые данные:', bookingData)
@@ -156,6 +174,8 @@ const submitBooking = async () => {
       seat.isSelected = false
     }
 
+    localStorage.setItem(getStorageKey('seats'), JSON.stringify(seats.value))
+
     bookingSuccess.value = true
     showBookingForm.value = false
     
@@ -168,7 +188,8 @@ const submitBooking = async () => {
           tour_date: form.value.tour_date,
           notes: form.value.notes,
           status: false,
-          rejected: false
+          rejected: false,
+          country: form.value.country
         }
         
         localStorage.setItem('latestBooking', JSON.stringify(bookingInfo))
@@ -180,7 +201,8 @@ const submitBooking = async () => {
       email: '',
       phone: '',
       tour_date: '',
-      notes: ''
+      notes: '',
+      country: ''
     }
     
     selectedSeat.value = null
@@ -197,6 +219,48 @@ const goBack = () => {
   showBookingForm.value = false
   bookingSuccess.value = false
 }
+
+const goToMain = () => {
+  navigateTo('/main')
+}
+
+const loadTourData = () => {
+  const country = route.query.country as string
+  const city = route.query.city as string
+  const price = route.query.price as string
+  const image = route.query.image as string
+  const id = route.query.id as string
+
+  if (country && city && price && image && id) {
+    tour.value = {
+      id: parseInt(id),
+      city: decodeURIComponent(city),
+      price: parseInt(price),
+      country: decodeURIComponent(country),
+      image: decodeURIComponent(image)
+    }
+    
+    form.value.country = decodeURIComponent(country)
+  }
+}
+
+const loadSeatsState = () => {
+  if (process.client) {
+    const savedSeats = localStorage.getItem(getStorageKey('seats'))
+    if (savedSeats) {
+      try {
+        seats.value = JSON.parse(savedSeats)
+      } catch (error) {
+        console.error('Ошибка при загрузке состояния мест:', error)
+      }
+    }
+  }
+}
+
+onMounted(() => {
+  loadTourData()
+  loadSeatsState()
+})
 </script>
 
 <template>
@@ -206,9 +270,9 @@ const goBack = () => {
         <Icon name="lucide:check-circle" class="success-icon" />
         <h2>Заявка отправлена!</h2>
         <p>Ваша заявка на бронирование отправлена на рассмотрение. Ожидайте подтверждения от администратора.</p>
-        <NuxtLink to="/main" variant="default" class="back-btn">
-          Вернуться к выбору мест
-        </NuxtLink>
+        <Button @click="goToMain" variant="default" class="back-btn">
+          Вернуться к выбору туров
+        </Button>
       </div>
     </div>
 
@@ -216,6 +280,7 @@ const goBack = () => {
       <div class="form-header">
         <h2>Заполните данные для бронирования</h2>
         <p>Место №{{ selectedSeat }} - BOEING 737-800</p>
+        <p v-if="tour">Тур: {{ tour.city }}, {{ tour.country }}</p>
       </div>
 
       <form @submit.prevent="submitBooking" class="booking-form">
@@ -263,6 +328,18 @@ const goBack = () => {
         </div>
 
         <div class="form-group">
+          <label for="country">Страна тура *</label>
+          <input
+            id="country"
+            v-model="form.country"
+            type="text"
+            required
+            placeholder="Введите страну тура"
+            disabled
+          />
+        </div>
+
+        <div class="form-group">
           <label for="notes">Комментарии (опционально)</label>
           <textarea
             id="notes"
@@ -299,6 +376,9 @@ const goBack = () => {
         <div class="aircraft-info">
           <span class="aircraft-model">Самолет: BOEING 737-800</span>
           <Icon name="lucide:info" class="info-icon" />
+        </div>
+        <div v-if="tour" class="tour-info">
+          <span class="tour-details">Тур: {{ tour.city }}, {{ tour.country }} - ${{ tour.price }}</span>
         </div>
       </div>
 
@@ -374,7 +454,7 @@ const goBack = () => {
         </div>
       </div>
       <div class="continue-btn-container">
-      <NuxtLink to="/main" class="continue-btn-link">Вернуться назад</NuxtLink>      
+      <Button @click="goToMain" variant="ghost" class="continue-btn-link">Вернуться назад</Button>      
       <Button 
         class="continue-btn" variant="default"
         @click="continueBooking"
@@ -391,6 +471,8 @@ const goBack = () => {
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
+  background: #ffffff;
+  color: #000000;
 }
 
 .header {
@@ -410,8 +492,19 @@ const goBack = () => {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  color: #4a90e2;
+  color: #000000;
   font-size: 16px;
+  margin-bottom: 10px;
+}
+
+.tour-info {
+  margin-bottom: 10px;
+  
+  .tour-details {
+    color: #000000;
+    font-size: 16px;
+    font-weight: 600;
+  }
 }
 
 .info-icon {
@@ -430,7 +523,7 @@ const goBack = () => {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #666;
+  color: #000000;
   font-size: 14px;
 }
 
@@ -441,18 +534,18 @@ const goBack = () => {
   border: 1px solid #ddd;
 
   &.free {
-    background-color: #e3f2fd;
-    border-color: #2196f3;
+    background-color: #ffffff;
+    border-color: #000000;
   }
 
   &.occupied {
-    background-color: #e0e0e0;
-    border-color: #9e9e9e;
+    background-color: #000000;
+    border-color: #000000;
   }
 
   &.selected {
-    background-color: #4caf50;
-    border-color: #388e3c;
+    background-color: #333333;
+    border-color: #000000;
   }
 }
 
@@ -466,8 +559,8 @@ const goBack = () => {
   justify-content: center;
   align-items: flex-start;
   gap: 20px;
-  background-color: #f8f9fa;
-  border: 2px solid #e0e0e0;
+  background-color: #ffffff;
+  border: 2px solid #000000;
   border-radius: 20px;
   padding: 30px;
   position: relative;
@@ -485,7 +578,7 @@ const goBack = () => {
 
 .aisle {
   width: 30px;
-  background-color: #fff;
+  background-color: #f0f0f0;
   border-radius: 5px;
   margin: 0 10px;
 }
@@ -501,26 +594,26 @@ const goBack = () => {
   font-size: 14px;
   cursor: pointer;
   transition: all 0.2s ease;
-  background-color: #e3f2fd;
-  border: 2px solid #2196f3;
-  color: #1976d2;
+  background-color: #ffffff;
+  border: 2px solid #000000;
+  color: #000000;
 
   &:hover:not(.occupied) {
-    background-color: #bbdefb;
+    background-color: #f0f0f0;
     transform: scale(1.05);
   }
 
   &.occupied {
-    background-color: #e0e0e0;
-    border-color: #9e9e9e;
-    color: #616161;
+    background-color: #000000;
+    border-color: #000000;
+    color: #ffffff;
     cursor: not-allowed;
   }
 
   &.selected {
-    background-color: #4caf50;
-    border-color: #388e3c;
-    color: white;
+    background-color: #333333;
+    border-color: #000000;
+    color: #ffffff;
     transform: scale(1.1);
   }
 }
@@ -531,7 +624,7 @@ const goBack = () => {
   right: 20px;
   width: 30px;
   height: 30px;
-  background-color: #1a365d;
+  background-color: #000000;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -554,11 +647,10 @@ const goBack = () => {
 .continue-btn-link {
   width: 100%;
   max-width: 300px;
-  padding: 10px;
   margin: 0 auto;
   text-align: center;
   display: block;
-  background-color: #999;
+  background-color: #666666;
   color: white;
   border: none;
   border-radius: 10px;
@@ -568,6 +660,7 @@ const goBack = () => {
   transition: all 0.2s ease;
   &:hover {
     transform: translateY(-2px);
+    background-color: #555555;
   }
 
   &:active {
@@ -601,8 +694,9 @@ const goBack = () => {
 .booking-form-container {
   max-width: 600px;
   margin: 0 auto;
-  background: white;
-  color: #000;
+  background: #ffffff;
+  color: #000000;
+  border: 2px solid #000000;
   border-radius: 20px;
   padding: 40px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
@@ -622,7 +716,7 @@ const goBack = () => {
   p {
     color: #666;
     font-size: 16px;
-    margin: 0;
+    margin: 0 0 5px 0;
   }
 }
 
@@ -645,20 +739,20 @@ const goBack = () => {
 
   input, textarea {
     padding: 12px 16px;
-    border: 2px solid #e0e0e0;
+    border: 2px solid #000000;
     border-radius: 10px;
     font-size: 16px;
     transition: border-color 0.2s ease;
-    background: #f8f9fa;
+    background: #ffffff;
 
     &:focus {
       outline: none;
-      border-color: #4a90e2;
-      background: white;
+      border-color: #333333;
+      background: #ffffff;
     }
 
     &::placeholder {
-      color: #999;
+      color: #666666;
     }
   }
 
@@ -675,26 +769,26 @@ const goBack = () => {
 
   .cancel-btn {
     flex: 1;
-    background: #f5f5f5;
-    color: #666;
-    border: 2px solid #e0e0e0;
+    background: #ffffff;
+    color: #000000;
+    border: 2px solid #000000;
 
     &:hover {
-      background: #e0e0e0;
+      background: #f0f0f0;
     }
   }
 
   .submit-btn {
     flex: 2;
-    background: #000;
-    color: white;
+    background: #000000;
+    color: #ffffff;
 
     &:hover:not(:disabled) {
-      background: #333;
+      background: #333333;
     }
 
     &:disabled {
-      background: #ccc;
+      background: #666666;
       cursor: not-allowed;
     }
   }
@@ -711,14 +805,15 @@ const goBack = () => {
   text-align: center;
   max-width: 500px;
   padding: 40px;
-  background: white;
+  background: #ffffff;
+  border: 2px solid #000000;
   border-radius: 20px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 
   .success-icon {
     width: 60px;
     height: 60px;
-    color: #4caf50;
+    color: #000000;
     margin-bottom: 20px;
   }
 
@@ -730,20 +825,20 @@ const goBack = () => {
   }
 
   p {
-    color: #666;
+    color: #666666;
     font-size: 16px;
     margin: 0 0 30px 0;
   }
 
   .back-btn {
-    background: #000;
-    color: white;
+    background: #000000;
+    color: #ffffff;
     padding: 12px 30px;
     border-radius: 10px;
     font-weight: 600;
 
     &:hover {
-      background: #333;
+      background: #333333;
     }
   }
 }

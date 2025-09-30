@@ -24,6 +24,7 @@ interface BookingInfo {
   notes: string
   status: boolean
   rejected?: boolean
+  country?: string
 }
 
 const tours = ref<Tour[]>([])
@@ -46,7 +47,7 @@ const fetchCountries = async () => {
     const data = await $fetch<CountriesResponse>('https://namaztimes.kz/ru/api/country')
     
     if (data && Object.keys(data).length > 0) {
-      const countriesArray = Object.entries(data).slice(10, 30)
+      const countriesArray = Object.entries(data).slice(10, 16)
       
       const countries = countriesArray.map(([id, name], index: number) => ({
         id: index + 1,
@@ -153,6 +154,10 @@ onMounted(() => {
           <div class="detail-row">
             <Icon name="lucide:calendar" class="detail-icon" />
             <span>Дата тура: {{ formatDate(latestBooking.tour_date) }}</span>
+          </div>
+          <div v-if="latestBooking.country" class="detail-row">
+            <Icon name="lucide:map-pin" class="detail-icon" />
+            <span>Страна: {{ latestBooking.country }}</span>
           </div>
           <div v-if="latestBooking.notes" class="detail-row">
             <Icon name="lucide:message-square" class="detail-icon" />

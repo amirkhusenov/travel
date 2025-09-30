@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import Button from '~/components/ui/button/Button.vue'
 
+definePageMeta({
+  middleware: 'admin'
+})
+
 interface BookingRequest {
   id: number
   name: string
@@ -11,6 +15,7 @@ interface BookingRequest {
   notes: string | null
   status: boolean
   rejected?: boolean
+  country?: string
 }
 
 const bookings = ref<BookingRequest[]>([])
@@ -55,7 +60,6 @@ const updateBookingStatus = async (id: number, approved: boolean) => {
         booking.status = true
       }
       
-      // Обновляем localStorage если это последнее бронирование
       if (process.client && booking) {
         const latestBooking = localStorage.getItem('latestBooking')
         if (latestBooking) {
@@ -75,7 +79,6 @@ const updateBookingStatus = async (id: number, approved: boolean) => {
       
       alert('Заявка успешно одобрена!')
     } else {
-      // Помечаем заявку как отклоненную (status = false, но добавляем поле rejected = true)
       const { error: updateError } = await supabase
         .from('booking')
         .update({ status: false, rejected: true })
@@ -85,14 +88,12 @@ const updateBookingStatus = async (id: number, approved: boolean) => {
         throw updateError
       }
 
-      // Обновляем локальное состояние
       const booking = bookings.value.find(b => b.id === id)
       if (booking) {
         booking.status = false
         booking.rejected = true
       }
       
-      // Обновляем localStorage если это последнее бронирование
       if (process.client && booking) {
         const latestBooking = localStorage.getItem('latestBooking')
         if (latestBooking) {
@@ -113,7 +114,6 @@ const updateBookingStatus = async (id: number, approved: boolean) => {
       alert('Заявка успешно отклонена!')
     }
 
-    // Перезагружаем данные для синхронизации с базой
     await fetchBookings()
 
   } catch (error) {
@@ -132,6 +132,14 @@ const getStatusText = (status: boolean, rejected?: boolean) => {
   return status ? 'Подтверждено' : 'Ожидание'
 }
 
+const logout = () => {
+  if (process.client) {
+    localStorage.removeItem('adminSession')
+    localStorage.removeItem('adminLoginTime')
+    navigateTo('/admin-login')
+  }
+}
+
 
 onMounted(() => {
   fetchBookings()
@@ -141,8 +149,20 @@ onMounted(() => {
 <template>
   <div class="admin-page">
     <div class="header">
-      <h1 class="title">Панель администратора</h1>
-      <p class="subtitle">Управление бронированиями</p>
+      <div class="header-content">
+        <div class="header-text">
+          <h1 class="title">Панель администратора</h1>
+          <p class="subtitle">Управление бронированиями</p>
+        </div>
+        <Button 
+          @click="logout"
+          variant="ghost"
+          class="logout-btn"
+        >
+          <Icon name="lucide:log-out" class="btn-icon" />
+          Выйти
+        </Button>
+      </div>
     </div>
 
     <div v-if="isLoading" class="loading">
@@ -166,6 +186,7 @@ onMounted(() => {
           <div class="booking-info">
             <h3>{{ booking.name }}</h3>
             <p>Место №{{ booking.seat_id }}</p>
+            <p v-if="booking.country" class="country-info">Страна: {{ booking.country }}</p>
           </div>
           <div 
             class="status-badge"
@@ -232,20 +253,54 @@ onMounted(() => {
 }
 
 .header {
-  text-align: center;
   margin-bottom: 40px;
 
-  .title {
-    font-size: 36px;
-    font-weight: 700;
-    color: #000;
-    margin: 0 0 10px 0;
+  .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
   }
 
-  .subtitle {
-    color: #666;
-    font-size: 18px;
-    margin: 0;
+  .header-text {
+    text-align: left;
+
+    .title {
+      font-size: 36px;
+      font-weight: 700;
+      color: #000;
+      margin: 0 0 10px 0;
+    }
+
+    .subtitle {
+      color: #666;
+      font-size: 18px;
+      margin: 0;
+    }
+  }
+
+  .logout-btn {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    &:hover {
+      background: #dc2626;
+      transform: translateY(-1px);
+    }
+
+    .btn-icon {
+      width: 16px;
+      height: 16px;
+    }
   }
 }
 
@@ -337,6 +392,13 @@ onMounted(() => {
       color: #666;
       font-size: 14px;
       margin: 0;
+    }
+
+    .country-info {
+      color: #4a90e2;
+      font-weight: 600;
+      font-size: 13px;
+      margin-top: 4px;
     }
   }
 
@@ -438,8 +500,19 @@ onMounted(() => {
     padding: 15px;
   }
 
-  .header .title {
-    font-size: 28px;
+  .header {
+    .header-content {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .header-text {
+      text-align: center;
+    }
+
+    .title {
+      font-size: 28px;
+    }
   }
 
   .booking-header {
